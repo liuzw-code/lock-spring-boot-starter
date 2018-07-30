@@ -3,9 +3,9 @@
 ### 基于SpringBoot + Redisson 实现分布式锁
 
 ### 简介
-    使用SpringBoot框架搭建
-    分布式锁选用redis实现。选择官方提供的redisson
-    结合spring aop使用
+    1. 使用SpringBoot框架搭建
+    2. 分布式锁选用redis实现。选择官方提供的redisson
+    3. 结合spring aop使用
 
 ### 使用
 
