@@ -27,6 +27,9 @@ import java.util.concurrent.atomic.AtomicReference;
 @Component
 public class DistributedLockAspect {
 
+    /**
+     * redis锁的前缀
+     */
     private static final String PREFIX_LOCK_NAME = "redis:distributed:lock:";
 
     @Autowired
@@ -39,21 +42,26 @@ public class DistributedLockAspect {
     public void distributedLockAspect(){}
 
 
+    /**
+     * 环绕执行方法，并为当前方法加锁
+     */
     @Around("distributedLockAspect()")
     public Object invoke(ProceedingJoinPoint pjp) {
         log.info("---------------->进入切面，开始获取分布式锁");
         MethodSignature methodSignature = (MethodSignature) pjp.getSignature();
 
         Method targetMethod = methodSignature.getMethod();
-
+        //获取锁的名字
         final String lockName = getLockName(pjp, targetMethod);
-
+        //获取锁，并执行相应的业务逻辑
         return lock(pjp, targetMethod, lockName);
 
     }
 
 
-
+    /**
+     * 获取锁的名字
+     */
     private String getLockName(ProceedingJoinPoint pjp, Method method) {
         DistributedLock annotation = method.getAnnotation(DistributedLock.class);
         //锁的名字
@@ -70,6 +78,9 @@ public class DistributedLockAspect {
     }
 
 
+    /**
+     * 获取锁，并执行相应的业务逻辑
+     */
     private Object lock(ProceedingJoinPoint pjp, Method method, final String lockName) {
         //获取方法上的注解
         DistributedLock annotation = method.getAnnotation(DistributedLock.class);
@@ -85,12 +96,18 @@ public class DistributedLockAspect {
         }
     }
 
+    /**
+     * 普通锁方法执行
+     */
     private Object lock(final ProceedingJoinPoint pjp, final Long leaseTime, final String lockName, boolean fairLock) {
         //获取锁
         distributedLock.lock(lockName,leaseTime, TimeUnit.SECONDS, fairLock);
         return proceed(pjp, leaseTime, lockName);
     }
 
+    /**
+     * 尝试锁方法执行
+     */
     private Object tryLock(final ProceedingJoinPoint pjp, DistributedLock annotation, final String lockName, boolean fairLock) {
         //等待时间
         Long waitTime = annotation.waitTime();
@@ -100,7 +117,7 @@ public class DistributedLockAspect {
         TimeUnit timeUnit = annotation.timeUnit();
         //判断是否获取到锁
         Boolean flag = distributedLock.tryLock(lockName, waitTime, leaseTime, timeUnit, fairLock);
-
+        //是否拿到锁
         if (flag) {
             return proceed(pjp, leaseTime, lockName);
         }
@@ -109,6 +126,9 @@ public class DistributedLockAspect {
     }
 
 
+    /**
+     * 执行业务逻辑
+     */
     private Object proceed(final ProceedingJoinPoint pjp, Long leaseTime, String lockName) {
         Object val = null;
         try {
@@ -125,7 +145,7 @@ public class DistributedLockAspect {
     /**
      * 为了防止线程在拿到锁之后，执行方法的时候，执行时间过长，
      * 超过了锁的失效时间而导致另一个线程拿到锁在执行该方法
-     * 因此这里添加一个守护线程来为当前拿到锁的线程续时，
+     * 因此这里添加一个守护线程来为当前拿到锁的线程续时。
      *
      * @param leaseTime  锁失效时间
      * @param lockName   锁的名字
@@ -138,11 +158,14 @@ public class DistributedLockAspect {
                 Long endTime = System.currentTimeMillis();
                 //主线程方法运行的时间即将超过失效时间时，延长锁的失效时间
                 if (endTime - startTime.get() + 2000 > leaseTime * 1000) {
+                    //延长锁的时间
                     distributedLock.expire(lockName, leaseTime, TimeUnit.SECONDS);
+                    //重新记录方法开始时间
                     startTime.set(System.currentTimeMillis());
                 }
             }
         });
+        //设置为 true 表示当前线程为守护线程
         thread.setDaemon(true);
         thread.start();
     }

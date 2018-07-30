@@ -21,14 +21,17 @@ public class DistributedLockImpl implements IDistributedLock {
      * 默认等待时间
      */
     private static final Long DEFAULT_WAIT_TIME = 30L;
+
     /**
      * 默认超时时间
      */
     private static final Long DEFAULT_EXPIRED_TIME = 30L;
+
     /**
      * 时间粒度 单位默认为秒
      */
     private static final TimeUnit DEFAULT_TIME_UNIT = TimeUnit.SECONDS;
+
 
     @Autowired
     private RedissonClient redissonClient;
@@ -80,6 +83,7 @@ public class DistributedLockImpl implements IDistributedLock {
 
     /**
      * 获取锁
+     *
      * @param lockName  锁的名字
      * @param fairLock  是否获取公平锁
      * @return          RLock

@@ -4,6 +4,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * 分布式锁
+ *
  * @author liuzw
  */
 public interface IDistributedLock {
