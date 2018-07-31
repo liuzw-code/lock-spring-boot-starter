@@ -36,6 +36,14 @@ public class DaemonThread extends Thread {
     private volatile Boolean flag = true;
 
 
+    public DaemonThread(String lockName, IDistributedLock distributedLock) {
+        //默认失效时间30s
+        this.leaseTime = 30L;
+        this.lockName = lockName;
+        this.distributedLock = distributedLock;
+    }
+
+
     public DaemonThread(Long leaseTime, String lockName, IDistributedLock distributedLock) {
         this.leaseTime = leaseTime;
         this.lockName = lockName;

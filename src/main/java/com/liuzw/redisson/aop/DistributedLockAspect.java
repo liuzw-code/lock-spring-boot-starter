@@ -145,8 +145,10 @@ public class DistributedLockAspect {
         } catch (Throwable throwable) {
             log.error("执行方法报错：", throwable.getMessage());
         } finally {
+            //停止线程
             thread.stopThread();
             log.info("-----------关闭延长锁失效时间线程-------");
+            //解锁
             distributedLock.unlock(lockName);
         }
         return val;
