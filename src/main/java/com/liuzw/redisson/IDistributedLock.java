@@ -62,6 +62,7 @@ public interface IDistributedLock {
      * @param lockName  锁的名字
      * @param leaseTime 失效时间
      * @param timeUnit  时间粒度
+     * @return          Boolean
      */
     Boolean expire(String lockName, Long leaseTime, TimeUnit timeUnit);
 
