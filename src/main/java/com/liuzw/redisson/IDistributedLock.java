@@ -48,6 +48,13 @@ public interface IDistributedLock {
      */
     Boolean tryLock(String lockName, Long waitTime, Long leaseTime, TimeUnit timeUnit, Boolean fairLock);
 
+    /**
+     * 是否上锁
+     *
+     * @param lockName 锁的名字
+     * @return Boolean
+     */
+    Boolean isLock(String lockName);
 
     /**
      * 关闭锁

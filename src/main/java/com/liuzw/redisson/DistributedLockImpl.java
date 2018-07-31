@@ -67,15 +67,23 @@ public class DistributedLockImpl implements IDistributedLock {
     }
 
     @Override
+    public Boolean isLock(String lockName) {
+        RLock lock = getLock(lockName, false);
+        Boolean flag = lock.isLocked();
+        log.info("-------->检测到key[{}]" + (flag ? "已经" : "没有") + "上锁", lockName);
+        return flag;
+    }
+
+    @Override
     public void unlock(String lockName) {
         log.info("-------->[{}]解锁", lockName);
-        RLock lock = redissonClient.getLock(lockName);
+        RLock lock = getLock(lockName, false);
         lock.unlock();
     }
 
     @Override
     public Boolean expire(String lockName, Long leaseTime, TimeUnit timeUnit) {
-        log.info("-------->[{}]延长锁失效时间", lockName);
+        log.info("-------->延长key[{}]的锁失效时间", lockName);
         RLock lock = redissonClient.getLock(lockName);
         return lock.expire(leaseTime, timeUnit);
 

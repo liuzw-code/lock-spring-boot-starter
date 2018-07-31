@@ -47,7 +47,6 @@ public class DistributedLockAspect {
      */
     @Around("distributedLockAspect()")
     public Object invoke(ProceedingJoinPoint pjp) {
-        log.info("---------------->进入切面，开始获取分布式锁");
         MethodSignature methodSignature = (MethodSignature) pjp.getSignature();
         Method targetMethod = methodSignature.getMethod();
         //获取锁的名字
@@ -98,6 +97,11 @@ public class DistributedLockAspect {
      * 普通锁方法执行
      */
     private Object lock(final ProceedingJoinPoint pjp, final Long leaseTime, final String lockName, boolean fairLock) {
+        //这里可以处理没有拿到锁的时候直接返回,而不是让请求一直等待阻塞
+        if (distributedLock.isLock(lockName)) {
+            //返回自己定义的结果
+            return null;
+        }
         //获取锁
         distributedLock.lock(lockName,leaseTime, TimeUnit.SECONDS, fairLock);
         return proceed(pjp, leaseTime, lockName);
@@ -120,7 +124,6 @@ public class DistributedLockAspect {
             return proceed(pjp, leaseTime, lockName);
         }
         return null;
-
     }
 
 
