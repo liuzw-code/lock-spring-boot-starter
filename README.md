@@ -41,10 +41,10 @@ public void test() {
 private IDistributedLock distributedLock;
 
 public void test() {
-	distributedLock.lock(...)
-	try {
-       // 执行业务代码    
-       
+    distributedLock.lock(...)
+    try {
+	// 执行业务代码    
+
     } catch (Exception e) {
        log.error("执行方法报错：", e);
     } finally {
@@ -64,9 +64,9 @@ public void test() {
  private IDistributedLock distributedLock;
  
  public void test() {
- 	 distributedLock.lock(...)
- 	 
- 	 DaemonThread thread = new DaemonThread(lockName, distributedLock);
+     distributedLock.lock(...)
+     //为锁续航的线程
+     DaemonThread thread = new DaemonThread(lockName, distributedLock);
      thread.start();
      try {
          // 执行业务代码    
