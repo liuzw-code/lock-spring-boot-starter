@@ -2,6 +2,7 @@ package com.liuzw.redisson.aop;
 
 import com.liuzw.redisson.IDistributedLock;
 import com.liuzw.redisson.annotation.DistributedLock;
+import com.liuzw.redisson.thread.DaemonThread;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -13,8 +14,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.lang.reflect.Method;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * 分布式锁Aop
@@ -49,13 +52,11 @@ public class DistributedLockAspect {
     public Object invoke(ProceedingJoinPoint pjp) {
         log.info("---------------->进入切面，开始获取分布式锁");
         MethodSignature methodSignature = (MethodSignature) pjp.getSignature();
-
         Method targetMethod = methodSignature.getMethod();
         //获取锁的名字
         final String lockName = getLockName(pjp, targetMethod);
         //获取锁，并执行相应的业务逻辑
         return lock(pjp, targetMethod, lockName);
-
     }
 
 
@@ -127,47 +128,30 @@ public class DistributedLockAspect {
 
 
     /**
-     * 执行业务逻辑
+     * 为了防止线程在拿到锁之后，执行方法的时候，执行时间过长，
+     * 超过了锁的失效时间而导致另一个线程拿到锁在执行该方法
+     * 因此这里添加一个线程来为当前拿到锁的线程续时。
+     *
+     * @param leaseTime  锁失效时间
+     * @param lockName   锁的名字
      */
     private Object proceed(final ProceedingJoinPoint pjp, Long leaseTime, String lockName) {
         Object val = null;
+        DaemonThread thread = new DaemonThread(leaseTime, lockName, distributedLock);
+        thread.setDaemon(true);
         try {
-            expandTime(leaseTime, lockName);
+            thread.start();
             val = pjp.proceed();
         } catch (Throwable throwable) {
             log.error("执行方法报错：", throwable.getMessage());
         } finally {
+            thread.stopThread();
+            log.info("-----------关闭延长锁失效时间线程-------");
             distributedLock.unlock(lockName);
         }
         return val;
     }
 
-    /**
-     * 为了防止线程在拿到锁之后，执行方法的时候，执行时间过长，
-     * 超过了锁的失效时间而导致另一个线程拿到锁在执行该方法
-     * 因此这里添加一个守护线程来为当前拿到锁的线程续时。
-     *
-     * @param leaseTime  锁失效时间
-     * @param lockName   锁的名字
-     */
-    private void expandTime(Long leaseTime, String lockName) {
-        AtomicReference<Long> startTime = new AtomicReference<>(System.currentTimeMillis());
-        Thread thread = new Thread(() -> {
-            while(true) {
-                //记录当前进入方法的时间
-                Long endTime = System.currentTimeMillis();
-                //主线程方法运行的时间即将超过失效时间时，延长锁的失效时间
-                if (endTime - startTime.get() + 2000 > leaseTime * 1000) {
-                    //延长锁的时间
-                    distributedLock.expire(lockName, leaseTime, TimeUnit.SECONDS);
-                    //重新记录方法开始时间
-                    startTime.set(System.currentTimeMillis());
-                }
-            }
-        });
-        //设置为 true 表示当前线程为守护线程
-        thread.setDaemon(true);
-        thread.start();
-    }
+
 
 }
