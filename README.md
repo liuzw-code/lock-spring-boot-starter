@@ -76,7 +76,7 @@ spring:
   @Autowired
   private IDistributedLock distributedLock;
 
-  public void test() {
+  public Object test() {
      //这里可以处理没有拿到锁的时候直接返回,而不是让请求一直等待阻塞
      if (distributedLock.isLock(lockName)) {
          //返回自己定义的结果
