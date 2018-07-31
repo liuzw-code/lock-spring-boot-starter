@@ -38,16 +38,16 @@ spring:
 
 4. 然后使用的时候只需在方法上加入注解 `@DistributedLock`
 
- ````
+````
  @DistributedLock
  public void test() {
  	 // 执行业务代码
  }
  ````
 
-  或者在类中注入`IDistributedLock`
+或者在类中注入`IDistributedLock`
 
- ````
+````
  @Autowired
  private IDistributedLock distributedLock;
 
@@ -71,8 +71,9 @@ spring:
 	这里我们模拟一个守护线程来为主线程的锁进行续时。当锁的失效时间快要到了的时候,但是业务 逻辑没执行完，就为该锁延长失效时间
 
 
-   注入`IDistributedLock`这种方式是没有加入线程的。如需使用则在上述方法中进行添加
- ````
+注入`IDistributedLock`这种方式是没有加入线程的。如需使用则在上述方法中进行添加
+
+````
   @Autowired
   private IDistributedLock distributedLock;
 
