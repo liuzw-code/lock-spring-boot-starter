@@ -54,8 +54,7 @@ spring:
  public void test() {
     distributedLock.lock(...)
     try {
-	   // 执行业务代码
-
+	  // 执行业务代码
     } catch (Exception e) {
        log.error("执行方法报错：", e);
     } finally {
@@ -78,13 +77,17 @@ spring:
   private IDistributedLock distributedLock;
 
   public void test() {
+     //这里可以处理没有拿到锁的时候直接返回,而不是让请求一直等待阻塞
+     if (distributedLock.isLock(lockName)) {
+         //返回自己定义的结果
+         return null;
+     }
       distributedLock.lock(...)
       //为锁续航的线程
       DaemonThread thread = new DaemonThread(lockName, distributedLock);
       thread.start();
       try {
-          // 执行业务代码
-
+        // 执行业务代码
       } catch (Exception e) {
           log.error("执行方法报错：", e);
       } finally {
