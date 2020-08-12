@@ -1,14 +1,14 @@
 package com.liuzw.redisson.config;
 
+import com.liuzw.redisson.DistributedLockImpl;
+import com.liuzw.redisson.IDistributedLock;
 import org.apache.commons.lang3.StringUtils;
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
-import org.redisson.config.SentinelServersConfig;
 import org.redisson.config.SingleServerConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -59,10 +59,15 @@ public class RedissonConfiguration {
         Config config = new Config();
         SingleServerConfig serverConfig = config.useSingleServer()
                 .setAddress("redis://" + redissonConfig.getHost() + ":" + redissonConfig.getPort());
-        if(StringUtils.isNotBlank(redissonConfig.getPassword())) {
+        if (StringUtils.isNotBlank(redissonConfig.getPassword())) {
             serverConfig.setPassword(redissonConfig.getPassword());
         }
         return Redisson.create(config);
+    }
+
+    @Bean
+    public IDistributedLock distributedLock() {
+        return new DistributedLockImpl();
     }
 
 }

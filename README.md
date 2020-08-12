@@ -10,24 +10,7 @@
 
 ### 使用
 
-1. 首先将本项目下载下来，在本地打成jar包, 然后在引入`redisson` jar包。
-````
-<dependency>
-    <groupId>org.redisson</groupId>
-    <artifactId>redisson</artifactId>
-    <version>3.6.5</version>
-</dependency>
-````
-
-2. 在使用之前首先还需要在自己的项目中添加一个配置类,主要是为了能够把jar中的配置信息加载进来
-````
-@Configuration
-@ComponentScan(basePackages = "com.liuzw.redisson")
-public class Config {
-}
-````
-
-3. 接着在配置文件中加入redis的配置，和正常redis的配置一样。
+1. 接着在配置文件中加入redis的配置，和正常redis的配置一样。
 ````
 spring:
   redis:
@@ -37,7 +20,7 @@ spring:
     password: xxxxx
 ````
 
-4. 然后使用的时候只需在方法上加入注解 `@DistributedLock`
+2. 然后使用的时候只需在方法上加入注解 `@DistributedLock`
 
 ````
  @DistributedLock
