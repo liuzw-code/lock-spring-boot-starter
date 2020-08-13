@@ -2,7 +2,7 @@
 # redisson-spring-boot-starter
 
 ### 基于SpringBoot + Redisson 实现分布式锁
-     写的不好的地方请轻喷,或者请各位大佬指导一下,不胜感激。
+    写的不好的地方请轻喷,或者请各位大佬指导一下,不胜感激。
 
 ### 简介
    1. 使用SpringBoot框架搭建
