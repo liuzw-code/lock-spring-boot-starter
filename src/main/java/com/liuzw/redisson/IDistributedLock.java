@@ -10,6 +10,13 @@ import java.util.concurrent.TimeUnit;
 public interface IDistributedLock {
 
     /**
+     * 使用分布式锁
+     *
+     * @param lockName  锁的名字
+     */
+    void lock(String lockName);
+
+    /**
      * 使用分布式锁，使用锁默认超时时间。
      * 
      * @param lockName  锁的名字
@@ -26,6 +33,14 @@ public interface IDistributedLock {
      * @param fairLock 是否使用公平锁
      */
     void lock(String lockName, Long leaseTime, TimeUnit timeUnit, Boolean fairLock);
+
+    /**
+     * 尝试分布式锁，使用锁默认等待时间、超时时间。
+     *
+     * @param lockName  锁的名字
+     * @return Boolean
+     */
+    Boolean tryLock(String lockName);
 
     /**
      * 尝试分布式锁，使用锁默认等待时间、超时时间。

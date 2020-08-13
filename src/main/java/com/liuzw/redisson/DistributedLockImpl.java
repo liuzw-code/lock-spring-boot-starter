@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * 分布式锁
+ *
  * @author liuzw
  */
 
@@ -37,6 +38,11 @@ public class DistributedLockImpl implements IDistributedLock {
     private RedissonClient redissonClient;
 
     @Override
+    public void lock(String lockName) {
+        lock(lockName, DEFAULT_EXPIRED_TIME, DEFAULT_TIME_UNIT, true);
+    }
+
+    @Override
     public void lock(String lockName, Boolean fairLock) {
         lock(lockName, DEFAULT_EXPIRED_TIME, DEFAULT_TIME_UNIT, fairLock);
     }
@@ -46,6 +52,11 @@ public class DistributedLockImpl implements IDistributedLock {
         log.info("-------->[{}]获取锁。", lockName);
         RLock lock = getLock(lockName, fairLock);
         lock.lock(leaseTime, timeUnit);
+    }
+
+    @Override
+    public Boolean tryLock(String lockName) {
+        return tryLock(lockName, DEFAULT_WAIT_TIME, DEFAULT_EXPIRED_TIME, DEFAULT_TIME_UNIT, true);
     }
 
     @Override
@@ -62,7 +73,7 @@ public class DistributedLockImpl implements IDistributedLock {
             return lock.tryLock(waitTime, leaseTime, timeUnit);
         } catch (InterruptedException e) {
             log.error("获取尝试锁出现异常", e);
-        } 
+        }
         return false;
     }
 
@@ -92,9 +103,9 @@ public class DistributedLockImpl implements IDistributedLock {
     /**
      * 获取锁
      *
-     * @param lockName  锁的名字
-     * @param fairLock  是否获取公平锁
-     * @return          RLock
+     * @param lockName 锁的名字
+     * @param fairLock 是否获取公平锁
+     * @return RLock
      */
     private RLock getLock(String lockName, Boolean fairLock) {
         //获取公平锁

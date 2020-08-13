@@ -15,9 +15,14 @@ import java.util.concurrent.TimeUnit;
 public class DaemonThread extends Thread {
 
     /**
-     * 失效时间
+     * 失效时间  默认失效时间30s
      */
-    private final Long leaseTime;
+    private Long leaseTime = 30L;
+
+    /**
+     * 提前操作时间 默认3s
+     */
+    private Integer advanceTime = 3;
 
     /**
      * 锁的名字
@@ -25,37 +30,39 @@ public class DaemonThread extends Thread {
     private final String lockName;
 
     /**
-     * 分布式锁
-     */
-    private final IDistributedLock distributedLock;
-
-    /**
      * 标记线程是否结束
      */
-    private Boolean flag;
+    private Boolean flag = true;
 
     /**
      * 守护线程开始执行时间
      */
     private Long startTime;
 
+    /**
+     * 分布式锁
+     */
+    private final IDistributedLock distributedLock;
 
     public DaemonThread(String lockName, IDistributedLock distributedLock) {
-        //默认失效时间30s
-        this.leaseTime = 30L;
+        this.startTime = System.currentTimeMillis();
         this.lockName = lockName;
         this.distributedLock = distributedLock;
-        this.flag = true;
-        this.startTime = System.currentTimeMillis();
     }
-
 
     public DaemonThread(Long leaseTime, String lockName, IDistributedLock distributedLock) {
         this.leaseTime = leaseTime;
+        this.startTime = System.currentTimeMillis();
         this.lockName = lockName;
         this.distributedLock = distributedLock;
-        this.flag = true;
+    }
+
+    public DaemonThread(Long leaseTime, Integer advanceTime, String lockName, IDistributedLock distributedLock) {
+        this.leaseTime = leaseTime;
+        this.advanceTime = advanceTime;
         this.startTime = System.currentTimeMillis();
+        this.lockName = lockName;
+        this.distributedLock = distributedLock;
     }
 
     /**
@@ -73,9 +80,9 @@ public class DaemonThread extends Thread {
             while (flag) {
                 //记录当前进入方法的时间
                 Long endTime = System.currentTimeMillis();
-                //主线程方法运行的时间即将超过失效时间时，延长锁的失效时间
-                //提前时间 写死了3秒 即在锁失效前3秒续航锁的失效时间
-                int advanceTime = 3;
+                // 主线程方法运行的时间即将超过失效时间时，延长锁的失效时间
+                // 提前时间 写死了3秒 即在锁失效前3秒续航锁的失效时间
+                // 此值可以根据具体的情况设置 在注解@DistributedLock 中advanceTime设置 单位为秒
                 if ((endTime - startTime) / 1000 + advanceTime > leaseTime) {
                     //延长锁的时间
                     distributedLock.expire(lockName, leaseTime, TimeUnit.SECONDS);

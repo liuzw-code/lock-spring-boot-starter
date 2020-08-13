@@ -41,7 +41,8 @@ public class DistributedLockAspect {
      * 切入点
      */
     @Pointcut("@annotation(com.liuzw.redisson.annotation.DistributedLock)")
-    public void distributedLockAspect(){}
+    public void distributedLockAspect() {
+    }
 
 
     /**
@@ -91,14 +92,14 @@ public class DistributedLockAspect {
         if (tryLock) {
             return tryLock(pjp, annotation, lockName, fairLock);
         } else {
-            return lock(pjp, annotation.leaseTime(), lockName, fairLock);
+            return lock(pjp, annotation.leaseTime(), annotation.advanceTime(), lockName, fairLock);
         }
     }
 
     /**
      * 普通锁方法执行
      */
-    private Object lock(final ProceedingJoinPoint pjp, final Long leaseTime, final String lockName, boolean fairLock) {
+    private Object lock(final ProceedingJoinPoint pjp, final Long leaseTime, final Integer advanceTime, final String lockName, boolean fairLock) {
         //这里可以处理没有拿到锁的时候直接返回,而不是让请求一直等待阻塞
         if (distributedLock.isLock(lockName)) {
             log.info("-----{}开始加锁, 未获取到锁, 返回 null-----", lockName);
@@ -106,8 +107,8 @@ public class DistributedLockAspect {
             return null;
         }
         //获取锁
-        distributedLock.lock(lockName,leaseTime, TimeUnit.SECONDS, fairLock);
-        return proceed(pjp, leaseTime, lockName);
+        distributedLock.lock(lockName, leaseTime, TimeUnit.SECONDS, fairLock);
+        return proceed(pjp, leaseTime, advanceTime, lockName);
     }
 
     /**
@@ -118,13 +119,15 @@ public class DistributedLockAspect {
         Long waitTime = annotation.waitTime();
         //失效时间
         Long leaseTime = annotation.leaseTime();
+
+        int advanceTime = annotation.advanceTime();
         //时间粒度
         TimeUnit timeUnit = annotation.timeUnit();
         //判断是否获取到锁
         Boolean flag = distributedLock.tryLock(lockName, waitTime, leaseTime, timeUnit, fairLock);
         //是否拿到锁
         if (flag) {
-            return proceed(pjp, leaseTime, lockName);
+            return proceed(pjp, leaseTime, advanceTime, lockName);
         }
         log.info("-----{}开始加锁, 未获取到锁, 返回 null-----", lockName);
         return null;
@@ -136,12 +139,13 @@ public class DistributedLockAspect {
      * 超过了锁的失效时间而导致另一个线程拿到锁在执行该方法
      * 因此这里添加一个守护线程来为当前拿到锁的线程续时。
      *
-     * @param leaseTime  锁失效时间
-     * @param lockName   锁的名字
+     * @param leaseTime   锁失效时间
+     * @param advanceTime 提前多少时间进行续航
+     * @param lockName    锁的名字
      */
-    private Object proceed(final ProceedingJoinPoint pjp, Long leaseTime, String lockName) {
+    private Object proceed(final ProceedingJoinPoint pjp, Long leaseTime, Integer advanceTime, String lockName) {
         Object val = null;
-        DaemonThread thread = new DaemonThread(leaseTime, lockName, distributedLock);
+        DaemonThread thread = new DaemonThread(leaseTime, advanceTime, lockName, distributedLock);
         thread.setDaemon(true);
         thread.start();
         try {
@@ -156,7 +160,6 @@ public class DistributedLockAspect {
         }
         return val;
     }
-
 
 
 }

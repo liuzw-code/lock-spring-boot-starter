@@ -42,6 +42,11 @@ public @interface DistributedLock {
     long leaseTime() default 30L;
 
     /**
+     * 锁超时提前操作时间 续航使用 单位秒
+     */
+    int advanceTime() default 3;
+
+    /**
      * 时间粒度(默认为秒)
      */
     TimeUnit timeUnit() default TimeUnit.SECONDS;
