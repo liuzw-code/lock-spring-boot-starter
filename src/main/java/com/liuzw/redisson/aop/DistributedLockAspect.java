@@ -10,6 +10,7 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -24,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Aspect
+@Order(-10)
 @Component
 public class DistributedLockAspect {
 
@@ -99,6 +101,7 @@ public class DistributedLockAspect {
     private Object lock(final ProceedingJoinPoint pjp, final Long leaseTime, final String lockName, boolean fairLock) {
         //这里可以处理没有拿到锁的时候直接返回,而不是让请求一直等待阻塞
         if (distributedLock.isLock(lockName)) {
+            log.info("-----{}开始加锁, 未获取到锁, 返回 null-----", lockName);
             //返回自己定义的结果
             return null;
         }
@@ -123,6 +126,7 @@ public class DistributedLockAspect {
         if (flag) {
             return proceed(pjp, leaseTime, lockName);
         }
+        log.info("-----{}开始加锁, 未获取到锁, 返回 null-----", lockName);
         return null;
     }
 
@@ -143,7 +147,7 @@ public class DistributedLockAspect {
             thread.start();
             val = pjp.proceed();
         } catch (Throwable throwable) {
-            log.error("执行方法报错：", throwable.getMessage());
+            log.error("执行方法报错：{}", throwable.getMessage());
         } finally {
             //停止线程
             thread.stopThread();
