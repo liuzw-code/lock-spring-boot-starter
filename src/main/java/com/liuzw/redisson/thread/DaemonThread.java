@@ -74,10 +74,9 @@ public class DaemonThread extends Thread {
                 //记录当前进入方法的时间
                 Long endTime = System.currentTimeMillis();
                 //主线程方法运行的时间即将超过失效时间时，延长锁的失效时间
-                //提前时间 写死了2秒 即在锁失效前2秒续航锁的失效时间
-                int advanceTime = 2;
+                //提前时间 写死了3秒 即在锁失效前3秒续航锁的失效时间
+                int advanceTime = 3;
                 if ((endTime - startTime) / 1000 + advanceTime > leaseTime) {
-                    log.info("--------开始延长锁的时间-------");
                     //延长锁的时间
                     distributedLock.expire(lockName, leaseTime, TimeUnit.SECONDS);
                     //重新记录方法开始时间
@@ -88,6 +87,5 @@ public class DaemonThread extends Thread {
         } catch (InterruptedException e) {
             log.error("守护线程执行异常", e);
         }
-        log.info("-------DaemonThread 停止运行-----");
     }
 }
