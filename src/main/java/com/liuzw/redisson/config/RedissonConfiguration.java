@@ -12,11 +12,13 @@ import org.redisson.config.SentinelServersConfig;
 import org.redisson.config.SingleServerConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.util.Assert;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * redisson 配置
@@ -67,7 +69,7 @@ public class RedissonConfiguration {
     /**
      * 单机模式自动装配
      *
-     * @return redissonClient
+     * @return redissonSingle
      */
     private RedissonClient redissonSingle() {
         Config config = new Config();
@@ -76,7 +78,6 @@ public class RedissonConfiguration {
         if (StringUtils.isNotBlank(redissonConfig.getPassword())) {
             serverConfig.setPassword(redissonConfig.getPassword());
         }
-
         return Redisson.create(config);
     }
 
@@ -91,8 +92,10 @@ public class RedissonConfiguration {
         String nodes = redissonConfig.getCluster().getNodes();
         //校验
         checkRedisUrl(nodes);
+        //处理redis地址
+        List<String> nodeList = handleRedisUrl(nodes);
         ClusterServersConfig serverConfig = config.useClusterServers()
-                .addNodeAddress(nodes);
+                .addNodeAddress(nodeList.toArray(new String[0]));
         if (StringUtils.isNotBlank(redissonConfig.getPassword())) {
             serverConfig.setPassword(redissonConfig.getPassword());
         }
@@ -111,13 +114,28 @@ public class RedissonConfiguration {
         String nodes = sentinel.getNodes();
         //校验
         checkRedisUrl(nodes);
+        //处理redis地址
+        List<String> nodeList = handleRedisUrl(nodes);
         SentinelServersConfig serverConfig = config.useSentinelServers()
-                .addSentinelAddress(nodes.split(","))
+                .addSentinelAddress(nodeList.toArray(new String[0]))
                 .setMasterName(sentinel.getMaster());
         if (StringUtils.isNotBlank(redissonConfig.getPassword())) {
             serverConfig.setPassword(redissonConfig.getPassword());
         }
         return Redisson.create(config);
+    }
+
+
+    /**
+     * 处理redis 地址
+     */
+    private List<String> handleRedisUrl(String nodes) {
+        String[] split = nodes.split(",");
+        List<String> nodeList = new ArrayList<>();
+        for (String node : split) {
+            nodeList.add(node.startsWith("redis://") ? node : "redis://" + node);
+        }
+        return nodeList;
     }
 
 

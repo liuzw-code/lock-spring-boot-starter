@@ -134,7 +134,7 @@ public class DistributedLockAspect {
     /**
      * 为了防止线程在拿到锁之后，执行方法的时候，执行时间过长，
      * 超过了锁的失效时间而导致另一个线程拿到锁在执行该方法
-     * 因此这里添加一个线程来为当前拿到锁的线程续时。
+     * 因此这里添加一个守护线程来为当前拿到锁的线程续时。
      *
      * @param leaseTime  锁失效时间
      * @param lockName   锁的名字
@@ -143,15 +143,14 @@ public class DistributedLockAspect {
         Object val = null;
         DaemonThread thread = new DaemonThread(leaseTime, lockName, distributedLock);
         thread.setDaemon(true);
+        thread.start();
         try {
-            thread.start();
             val = pjp.proceed();
         } catch (Throwable throwable) {
             log.error("执行方法报错：{}", throwable.getMessage());
         } finally {
             //停止线程
             thread.stopThread();
-            log.info("-----------关闭延长锁失效时间线程-------");
             //解锁
             distributedLock.unlock(lockName);
         }
