@@ -184,7 +184,6 @@ public void run() {
                 //主线程方法运行的时间即将超过失效时间时，延长锁的失效时间
                 //提前时间 写死了3秒 即在锁失效前3秒续航锁的失效时间
                 // 此值可以根据具体的情况设置 在DistributedLock 注解中advanceTime设置 单位为秒
-                int advanceTime = 3;
                 if ((endTime - startTime) / 1000 + advanceTime > leaseTime) {
                     //延长锁的时间
                     distributedLock.expire(lockName, leaseTime, TimeUnit.SECONDS);
