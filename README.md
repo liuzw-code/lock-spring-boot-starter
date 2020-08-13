@@ -48,8 +48,6 @@ spring:
 
 ### 使用
 
- 1. 使用的时候只需在方法上加入注解 `@DistributedLock`
-
 注解介绍：
 ````
 public @interface DistributedLock {
@@ -93,6 +91,8 @@ public @interface DistributedLock {
 
 }
 ````
+
+1. 使用的时候只需在方法上加入注解 `@DistributedLock`即可,注解具体参数自行设置
 
 ````
  @DistributedLock
@@ -179,18 +179,17 @@ public void run() {
         log.info("--------守护线程开始执行-------");
         try {
             while (flag) {
-                //记录当前进入方法的时间
+                // 记录当前进入方法的时间
                 Long endTime = System.currentTimeMillis();
-                //主线程方法运行的时间即将超过失效时间时，延长锁的失效时间
-                //提前时间 写死了3秒 即在锁失效前3秒续航锁的失效时间
+                // 主线程方法运行的时间即将超过失效时间时，延长锁的失效时间
                 // 此值可以根据具体的情况设置 在DistributedLock 注解中advanceTime设置 单位为秒
                 if ((endTime - startTime) / 1000 + advanceTime > leaseTime) {
-                    //延长锁的时间
+                    // 延长锁的时间
                     distributedLock.expire(lockName, leaseTime, TimeUnit.SECONDS);
-                    //重新记录方法开始时间
+                    // 重新记录方法开始时间
                     startTime = System.currentTimeMillis();
                 }
-                //睡眠100毫秒 主要是节省点cpu资源
+                // 睡眠100毫秒 主要是节省点cpu资源
                 TimeUnit.MILLISECONDS.sleep(100);
             }
         } catch (InterruptedException e) {
