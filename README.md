@@ -1,4 +1,4 @@
-# redisson-spring-boot-starter
+# lock-spring-boot-starter
 
 ### 基于SpringBoot + Redisson 实现分布式锁
 
